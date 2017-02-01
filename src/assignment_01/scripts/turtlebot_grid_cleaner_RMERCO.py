@@ -106,7 +106,11 @@ def main():
 
         # calculate angle
         #target_orientation = math.cos(math.atan2((pos_y - current_y), (pos_x - current_x)) / 2)
-        target_orientation = math.cos(math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) / 2)
+        if (pos_y - current_y)>=0:
+            angle = math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) / 2
+        else:
+            angle = math.atan2((pos_y - current_y), (pos_x - current_x)) / 2
+        target_orientation = math.cos(angle)
 
         # go to target orientation
         set_orientation(target_orientation)
@@ -137,9 +141,16 @@ def main():
         last_errorS = 0.0
         d_errorS = 0.0
         i_errorS = 0.0
+
+        # orientation control
+        errorY = 0.0
+        last_errorY = 0.0
+        d_errorY = 0.0
+        i_errorY = 0.0
+
         while not rospy.is_shutdown():
             # define Kp and Ki
-            KpS = 0.08
+            KpS = 1.0 #0.08
             KiS = 0.001
             KdS = 1.0
             # Calculate error
@@ -148,6 +159,14 @@ def main():
                 turtlebot_odom.pose.pose.position.y,
                 pos_x, pos_y)
             d_errorS = (errorS - last_errorS) * control_frequency
+
+            # define Kp and Ki orientation
+            KpY = 5.0
+            KiY = 0.003
+            KdY = 2.0
+            # Calculate error orientation
+            errorY = target_orientation - turtlebot_odom.pose.pose.orientation.w
+            d_errorY = (errorY - last_errorY) * control_frequency
 
             if errorS < tol:
                 break
@@ -160,7 +179,10 @@ def main():
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
 
-            vel_msg.angular.z = 0
+            vel_msg.angular.z = constrain(
+                KpY * errorY + KiY * i_errorY + KdY * d_errorY,
+                -math.radians(10),
+                math.radians(10))
 
             velocity_publisher.publish(vel_msg)
 
@@ -169,6 +191,12 @@ def main():
             else:
                 i_errorS = 0
             last_errorS = errorS
+
+            if i_errorY < 1.5:
+                i_errorY += errorY / control_frequency
+            else:
+                i_errorY = 0
+            last_errorY = errorY
 
             rate.sleep()
 
@@ -211,10 +239,10 @@ def main():
 
     #---------------------------------------------------
     # Test set_orientation
-    rospy.loginfo("Set orientation (0)")
-    set_orientation(0)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Set orientation (0)")
+    # set_orientation(0)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
     # rospy.loginfo("Set orientation (0.5)")
     # set_orientation(0.5)
@@ -247,25 +275,30 @@ def main():
     # Test go_to_pos
     # x limit (-4.5, 4.5), y limit (-4.5, 4.5)
 
-    # rospy.loginfo("Go to position (1,1)")
-    # go_to_pos(1, 1)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
+    rospy.loginfo("Go to position (1,1)")
+    go_to_pos(1, -1)   # go_to_pos(1, 1)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
 
-    # rospy.loginfo("Go to position (3,4)")
-    # go_to_pos(3, 4)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
+    rospy.loginfo("Go to position (3,4)")
+    go_to_pos(-1, 1)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
 
-    # rospy.loginfo("Go to position (-2,-3)")
-    # go_to_pos(-2, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
+    rospy.loginfo("Go to position (-2,-3)")
+    go_to_pos(-1, -1)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
 
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(0, 0)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(1, -1)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(0, 0)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
 
     # grid_clean_10_by_10()
     # spiral_clean_10_by_10()
