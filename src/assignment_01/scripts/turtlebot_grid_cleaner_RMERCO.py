@@ -276,22 +276,22 @@ def main():
     # x limit (-4.5, 4.5), y limit (-4.5, 4.5)
 
     rospy.loginfo("Go to position (1,1)")
-    go_to_pos(1, -1)   # go_to_pos(1, 1)
+    go_to_pos(1, 2)   # go_to_pos(1, 1)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (3,4)")
-    go_to_pos(-1, 1)
+    go_to_pos(0, 2)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (-2,-3)")
-    go_to_pos(-1, -1)
+    go_to_pos(0, 0)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (0,0)")
-    go_to_pos(1, -1)
+    go_to_pos(-1, 2)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
