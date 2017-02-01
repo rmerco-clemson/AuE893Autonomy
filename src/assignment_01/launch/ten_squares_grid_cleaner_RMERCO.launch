@@ -1,0 +1,9 @@
+<launch>
+
+  <node pkg="assignment_01" type="turtlebot_grid_cleaner.py" name="turtlebot_grid_cleaner"  output="screen">
+    <param name="scale_linear" value="1.0" type="double"/>
+    <param name="scale_angular" value="0.01" type="double"/>
+    <remap from="turtle1/cmd_vel" to="cmd_vel_mux/input/teleop"/>
+  </node>
+
+</launch>

@@ -1,0 +1,20 @@
+<launch>
+
+
+  <!-- run turtlesim node-->
+  <node 
+  pkg="turtlesim" 
+  type="turtlesim_node" 
+  name="turtle1"  
+  output="screen">
+  </node>
+ 
+  <!-- run the turtelsim_spiral_cleanernode  -->
+  <node 
+  pkg="assignment_01" 
+  type="turtlesim_spiral_cleaner.py" 
+  name="turtlesim_spiral_clean_demo"  
+  output="screen">
+  </node>
+  
+</launch>
