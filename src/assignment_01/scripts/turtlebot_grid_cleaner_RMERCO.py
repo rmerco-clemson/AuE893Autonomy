@@ -150,7 +150,7 @@ def main():
 
         while not rospy.is_shutdown():
             # define Kp and Ki
-            KpS = 1.0 #0.08
+            KpS = 0.3
             KiS = 0.001
             KdS = 1.0
             # Calculate error
@@ -276,22 +276,72 @@ def main():
     # x limit (-4.5, 4.5), y limit (-4.5, 4.5)
 
     rospy.loginfo("Go to position (1,1)")
-    go_to_pos(1, 2)   # go_to_pos(1, 1)
+    go_to_pos(3, -3)   # go_to_pos(1, 1)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (3,4)")
-    go_to_pos(0, 2)
+    go_to_pos(3, 3)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (-2,-3)")
-    go_to_pos(0, 0)
+    go_to_pos(2, 3)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
     rospy.loginfo("Go to position (0,0)")
-    go_to_pos(-1, 2)
+    go_to_pos(2, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(1, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(1, 3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(0, 3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(0, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-1, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-1, 3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-2, 3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-2, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-3, -3)
+    rospy.loginfo("Arrived.")
+    time.sleep(2)
+
+    rospy.loginfo("Go to position (0,0)")
+    go_to_pos(-3, 3)
     rospy.loginfo("Arrived.")
     time.sleep(2)
 
@@ -299,6 +349,7 @@ def main():
     go_to_pos(0, 0)
     rospy.loginfo("Arrived.")
     time.sleep(2)
+
 
     # grid_clean_10_by_10()
     # spiral_clean_10_by_10()
