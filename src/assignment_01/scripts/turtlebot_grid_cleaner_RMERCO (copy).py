@@ -22,11 +22,12 @@ def main():
         turtlebot_odom.pose.pose.position.y = odom_msg.pose.pose.position.y
         turtlebot_odom.pose.pose.orientation.w = odom_msg.pose.pose.orientation.w
 
-        rospy.loginfo("px=%.2f, py=%.2f, orz= %.3f, theta=%.1f ",
+        rospy.loginfo("px=%.2f, py=%.2f, orz= %.3f, theta=%.1f, targetTheta=%.1f ",
                       turtlebot_odom.pose.pose.position.x,
                       turtlebot_odom.pose.pose.position.y,
                       turtlebot_odom.pose.pose.orientation.w,
-                      math.degrees(2 * math.acos(turtlebot_odom.pose.pose.orientation.w)))
+                      math.degrees(2 * math.acos(turtlebot_odom.pose.pose.orientation.w)
+                      math.cos(math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) / 2)))
 
     # publisher for cmd_vel to turtlesim
     velocity_publisher = rospy.Publisher(
@@ -50,21 +51,21 @@ def main():
         control_frequency = 30
         rate = rospy.Rate(control_frequency)
 
-        errorY = 0.0
-        last_errorY = 0.0
-        d_errorY = 0.0
-        i_errorY = 0.0
+        error = 0.0
+        last_error = 0.0
+        d_error = 0.0
+        i_error = 0.0
 
         while not rospy.is_shutdown():
             # define Kp and Ki
-            KpY = 5.0
-            KiY = 0.003
-            KdY = 2.0
+            Kp = 0.2
+            Ki = 0.003
+            Kd = 20.0
             # Calculate error
-            errorY = desired_orientation_z - turtlebot_odom.pose.pose.orientation.w
-            d_errorY = (errorY - last_errorY) * control_frequency
+            error = desired_orientation_z - turtlebot_odom.pose.pose.orientation.w
+            d_error = (error - last_error) * control_frequency
 
-            if math.fabs(errorY) < tol:
+            if math.fabs(error) < tol:
                 break
             # generate vel cmd
             vel_msg.linear.x = 0
@@ -73,17 +74,17 @@ def main():
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
             vel_msg.angular.z = constrain(
-                KpY * errorY + KiY * i_errorY + KdY * d_errorY,
+                Kp * error + Ki * i_error + Kd * d_error,
                 -math.radians(10),
                 math.radians(10))
 
             velocity_publisher.publish(vel_msg)
 
-            if i_errorY < 1.5:
-                i_errorY += errorY / control_frequency
+            if i_error < 1.5:
+                i_error += error / control_frequency
             else:
-                i_errorY = 0
-            last_errorY = errorY
+                i_error = 0            
+            last_error = error
 
             rate.sleep()
 
@@ -133,42 +134,65 @@ def main():
         # loop rate
         control_frequency = 30
         rate = rospy.Rate(control_frequency)
-        errorS = 0.0
-        last_errorS = 0.0
-        d_errorS = 0.0
-        i_errorS = 0.0
+        errorSpeed = 0.0
+        last_errorSpeed = 0.0
+        d_errorSpeed = 0.0
+        i_errorSpeed = 0.0
+
+        # error for orientation controller
+        errorYaw = 0.0
+        last_errorYaw = 0.0
+        d_errorYaw = 0.0
+        i_errorYaw = 0.0
+
         while not rospy.is_shutdown():
             # define Kp and Ki
-            KpS = 0.08
-            KiS = 0.001
-            KdS = 1.0
+            Kps = 0.08
+            Kis = 0.001
+            Kds = 1.0
+            Kpy = 2
+            Kiy = 0.003
+            Kdy = 20.0
+            
             # Calculate error
-            errorS = get_distance(
+            errorSpeed = get_distance(
                 turtlebot_odom.pose.pose.position.x,
                 turtlebot_odom.pose.pose.position.y,
                 pos_x, pos_y)
-            d_errorS = (errorS - last_errorS) * control_frequency
-
-            if errorS < tol:
+            if errorSpeed < tol:
                 break
+
+            # Calculate error for orientation
+            errorYaw = target_orientation - turtlebot_odom.pose.pose.orientation.w
+            d_errorYaw = (errorYaw - last_errorYaw) * control_frequency
 
             # generate vel cmd
             vel_msg.linear.x = constrain(
-                KpS * errorS + KiS * i_errorS + KdS * d_errorS, -0.4, 0.4)
+                Kps * errorSpeed + Kis * i_errorSpeed + Kds * d_errorSpeed, -0.25, 0.25)
             vel_msg.linear.y = 0
             vel_msg.linear.z = 0
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
 
-            vel_msg.angular.z = 0
+            vel_msg.angular.z = constrain(
+                Kpy * errorYaw + Kiy * i_errorYaw + Kdy * d_errorYaw,
+                -math.radians(10),
+                math.radians(10))
 
             velocity_publisher.publish(vel_msg)
 
-            if i_errorS < 1:
-                i_errorS += errorS / control_frequency
+            if i_errorSpeed < 1:
+                i_errorSpeed += errorSpeed / control_frequency
             else:
-                i_errorS = 0
-            last_errorS = errorS
+                i_errorSpeed = 0
+            d_errorSpeed = (errorSpeed - last_errorSpeed) / control_frequency
+            last_errorSpeed = errorSpeed
+
+            if i_errorYaw < 1.5:
+                i_errorYaw += errorYaw / control_frequency
+            else:
+                i_errorYaw = 0
+            last_errorYaw = errorYaw
 
             rate.sleep()
 
