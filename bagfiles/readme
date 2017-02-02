@@ -1,0 +1,8 @@
+in order to play the rosbag type this line:
+>rosrun turtlesim turtlesim_node
+
+and then in another terminal type the following line for the gridcleaner:
+>rosbag play gridcleaner_turtlesim.bag
+
+or type the following line for the spiralcleaner:
+>rosbag play spiralcleaner_turtlesim.bag

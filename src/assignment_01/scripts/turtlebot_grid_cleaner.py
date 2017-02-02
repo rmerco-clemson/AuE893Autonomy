@@ -57,11 +57,12 @@ def main():
 
         while not rospy.is_shutdown():
             # define Kp and Ki
-            Kp = 2
+            Kp = 5.0
             Ki = 0.003
             Kd = 2.0
             # Calculate error
             error = desired_orientation_z - turtlebot_odom.pose.pose.orientation.w
+            d_error = (error - last_error) * control_frequency
 
             if math.fabs(error) < tol:
                 break
@@ -82,7 +83,6 @@ def main():
                 i_error += error / control_frequency
             else:
                 i_error = 0
-            d_error = (error - last_error) / control_frequency
             last_error = error
 
             rate.sleep()
@@ -95,18 +95,21 @@ def main():
         vel_msg.angular.z = 0
         velocity_publisher.publish(vel_msg)
 
-        
-
     def go_to_pos(pos_x=0.0, pos_y=0.0, tol=0.05):
         ''' Let the turtle go to certain x,y in turtlesim'''
 
         # get current position
         current_x = turtlebot_odom.pose.pose.position.x
         current_y = turtlebot_odom.pose.pose.position.y
+        current_w = turtlebot_odom.pose.pose.orientation.w
 
         # calculate angle
-        #target_orientation = math.cos(math.atan2((pos_y - current_y), (pos_x - current_x)) / 2)
-        target_orientation = math.cos(math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) / 2)
+        if pos_y - current_y >= 0:
+            temp_angle = math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) / 2
+        else:
+            temp_angle = math.atan2((pos_y - current_y), (pos_x - current_x)) / 2
+
+        target_orientation = math.cos(temp_angle)
 
         # go to target orientation
         set_orientation(target_orientation)
@@ -133,41 +136,80 @@ def main():
         # loop rate
         control_frequency = 30
         rate = rospy.Rate(control_frequency)
-        error = 0.0
-        last_error = 0.0
-        d_error = 0.0
-        i_error = 0.0
+
+        # Init parameters of distance pid
+        error_distance = 0.0
+        last_error_distance = 0.0
+        d_error_distance = 0.0
+        i_error_distance = 0.0
+
+        # Init parameters of orientation pid
+        error_orientation = 0.0
+        last_error_orientation = 0.0
+        d_error_orientation = 0.0
+        i_error_orientation = 0.0
+
         while not rospy.is_shutdown():
-            # define Kp and Ki
-            Kp = 0.08
-            Ki = 0.001
-            Kd = 1.0
+            # define Kp, Ki, Kd
+            Kp_distance = 0.3
+            Ki_distance = 0.001
+            Kd_distance = 1.0
+
+            Kp_orientation = 5.0
+            Ki_orientation = 0.003
+            Kd_orientation = 2.0
+
             # Calculate error
-            error = get_distance(
+            error_distance = get_distance(
                 turtlebot_odom.pose.pose.position.x,
                 turtlebot_odom.pose.pose.position.y,
                 pos_x, pos_y)
-            if error < tol:
+
+            error_orientation = target_orientation - turtlebot_odom.pose.pose.orientation.w
+
+            d_error_distance = (error_distance - last_error_distance) * control_frequency
+            d_error_orientation = (error_orientation - \
+             last_error_orientation) * control_frequency
+
+
+            # check stop condition
+            if error_distance < tol:
                 break
 
             # generate vel cmd
             vel_msg.linear.x = constrain(
-                Kp * error + Ki * i_error + Kd * d_error, -0.25, 0.25)
+                Kp_distance * error_distance + \
+                Ki_distance * i_error_distance + \
+                Kd_distance * d_error_distance, -0.35, 0.35)
+
             vel_msg.linear.y = 0
             vel_msg.linear.z = 0
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
 
-            vel_msg.angular.z = 0
+            vel_msg.angular.z = constrain(
+                Kp_orientation * error_orientation \
+                + Ki_orientation * i_error_orientation + \
+                Kd_orientation * d_error_orientation,
+                -math.radians(10),
+                math.radians(10))
 
             velocity_publisher.publish(vel_msg)
 
-            if i_error < 1:
-                i_error += error / control_frequency
+            if i_error_distance < 1:
+                i_error_distance += error_distance / control_frequency
             else:
-                i_error = 0
-            d_error = (error - last_error) / control_frequency
-            last_error = error
+                i_error_distance = 0
+
+            last_error_distance = error_distance
+
+            if i_error_orientation < 1.5:
+                i_error_orientation += error_orientation / control_frequency
+            else:
+                i_error_orientation = 0
+
+
+            last_error_orientation = error_orientation
 
             rate.sleep()
 
@@ -185,17 +227,82 @@ def main():
         rospy.loginfo("Task: grid clean the room 10 by 10.")
         rospy.loginfo("Init Gazebo world...")
         time.sleep(5)
+        
+        rospy.loginfo("Go to position (1,1)")
+        
+        go_to_pos(3, -3)   # go_to_pos(1, 1)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
 
-        go_to_pos(-3.0, -3.0)
-        time.sleep(1)
-        go_to_pos(-3.0, 3.0)
-        time.sleep(1)
-        go_to_pos(-2.0, 3.0)
-        time.sleep(1)
-        go_to_pos(-2.0, -3.0)
-        time.sleep(1)
+        rospy.loginfo("Go to position (3,4)")
+        go_to_pos(3, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
 
+        rospy.loginfo("Go to position (-2,-3)")
+        go_to_pos(2, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
 
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(2, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(1, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(1, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(0, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(0, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-1, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-1, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-2, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-2, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-3, -3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(-3, 3)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
+
+        rospy.loginfo("Go to position (0,0)")
+        go_to_pos(0, 0)
+        rospy.loginfo("Arrived.")
+        time.sleep(2)
 
         print "Grid cleanning is completed!"
 
@@ -210,35 +317,66 @@ def main():
 
     #---------------------------------------------------
     # Test set_orientation
-    # rospy.loginfo("Set orientation (0)")
-    # set_orientation(0)
+    # rospy.loginfo("Set orientation (0.1)")
+    # set_orientation(0.1)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
 
-    # rospy.loginfo("Set orientation (0.5)")
-    # set_orientation(0.5)
+    # rospy.loginfo("Set orientation (0.2)")
+    # set_orientation(0.2)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
 
-    # rospy.loginfo("Set orientation (1)")
+    # rospy.loginfo("Set orientation (0.4)")
+    # set_orientation(0.4)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (0.6)")
+    # set_orientation(0.6)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (0.8)")
+    # set_orientation(0.8)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (1.0)")
     # set_orientation(1.0)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
 
-    # rospy.loginfo("Set orientation (0)")
+    # rospy.loginfo("Set orientation (-0.1)")
+    # set_orientation(-0.1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (-0.2)")
+    # set_orientation(-0.2)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (-0.4)")
+    # set_orientation(-0.4)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (-0.6)")
+    # set_orientation(-0.6)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (-0.8)")
+    # set_orientation(-0.8)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
+
+    # rospy.loginfo("Set orientation (-1.0)")
     # set_orientation(-1.0)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
 
-    # rospy.loginfo("Set orientation (0.5)")
-    # set_orientation(-0.5)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Set orientation (1)")
-    # set_orientation(0)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
 
 
 
@@ -246,28 +384,31 @@ def main():
     # Test go_to_pos
     # x limit (-4.5, 4.5), y limit (-4.5, 4.5)
 
-    rospy.loginfo("Go to position (1,1)")
-    go_to_pos(1, 1)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (1,1)")
+    # go_to_pos(0, 1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    rospy.loginfo("Go to position (3,4)")
-    go_to_pos(3, 4)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (3,4)")
+    # go_to_pos(1, 1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    rospy.loginfo("Go to position (-2,-3)")
-    go_to_pos(-2, -3)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (-2,-3)")
+    # go_to_pos(1.0, 0)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    rospy.loginfo("Go to position (0,0)")
-    go_to_pos(0, 0)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (0,0)")
+    # go_to_pos(-1.0, 0)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    # grid_clean_10_by_10()
-    # spiral_clean_10_by_10()
+    grid_clean_10_by_10()
+
+
+
+
 
     rospy.loginfo("Task complished.")
 

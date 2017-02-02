@@ -31,7 +31,7 @@ def main():
 
     # publisher for cmd_vel to turtlesim
     velocity_publisher = rospy.Publisher(
-        'cmd_vel_mux/input/teleop', Twist, queue_size=5)
+        '/turtle1/cmd_vel', Twist, queue_size=5)
     rospy.Subscriber(
         "/odom", Odometry, odeometry_callback, queue_size=5)
     rospy.init_node('turtlesim_cleaner', anonymous=True)
@@ -375,18 +375,8 @@ def main():
     # time.sleep(4)
     # set_orientation(90)
 
-    #grid_clean_10_by_10()
+    grid_clean_10_by_10()
     # spiral_clean_10_by_10()
-
-    rospy.loginfo('Move forward 2 meters...')
-    move(0.05, 2, True)
-    rospy.loginfo('Rotate 180 degrees...')
-    rotate(6, 180, True)
-    rospy.loginfo('Move forward 2 meters...')
-    move(0.05, 2, True)
-
-
-
 
     rospy.loginfo("Task complished.")
 
