@@ -1,0 +1,8 @@
+prefix=/home/rmerco/AuE893_rmerco/install
+
+Name: assignment_02
+Description: Description of assignment_02
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/rmerco/AuE893_rmerco/install/lib 
+Requires: 

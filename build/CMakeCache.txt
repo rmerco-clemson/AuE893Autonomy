@@ -184,7 +184,10 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Path to a program.
-DOXYGEN_EXECUTABLE:FILEPATH=DOXYGEN_EXECUTABLE-NOTFOUND
+DOXYGEN_EXECUTABLE:FILEPATH=/usr/bin/doxygen
+
+//Doxygen found
+DOXYGEN_FOUND:BOOL=TRUE
 
 //Path to a program.
 EMPY_EXECUTABLE:FILEPATH=/usr/bin/empy
@@ -251,6 +254,12 @@ assignment_01_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/assignment_01
 
 //Value Computed by CMake
 assignment_01_SOURCE_DIR:STATIC=/home/rmerco/AuE893_rmerco/src/assignment_01
+
+//Value Computed by CMake
+assignment_02_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/assignment_02
+
+//Value Computed by CMake
+assignment_02_SOURCE_DIR:STATIC=/home/rmerco/AuE893_rmerco/src/assignment_02
 
 //The directory containing a CMake configuration file for catkin.
 catkin_DIR:PATH=/opt/ros/kinetic/share/catkin/cmake
@@ -418,7 +427,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=3
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

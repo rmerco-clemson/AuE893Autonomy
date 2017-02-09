@@ -118,6 +118,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/rmerco/AuE893_rmerco/build/gtest/cmake_install.cmake")
   include("/home/rmerco/AuE893_rmerco/build/assignment_01/cmake_install.cmake")
+  include("/home/rmerco/AuE893_rmerco/build/assignment_02/cmake_install.cmake")
 
 endif()
 
