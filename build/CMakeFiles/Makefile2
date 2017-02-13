@@ -833,6 +833,24 @@ assignment_02/preinstall:
 .PHONY : assignment_02/preinstall
 
 #=============================================================================
+# Directory level rules for directory assignment_03
+
+# Convenience name for "all" pass in the directory.
+assignment_03/all:
+
+.PHONY : assignment_03/all
+
+# Convenience name for "clean" pass in the directory.
+assignment_03/clean:
+
+.PHONY : assignment_03/clean
+
+# Convenience name for "preinstall" pass in the directory.
+assignment_03/preinstall:
+
+.PHONY : assignment_03/preinstall
+
+#=============================================================================
 # Special targets to cleanup operation of make.
 
 # Special rule to run CMake to check the build system integrity.

@@ -14,6 +14,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "assignment_01/catkin_generated/package.cmake"
   "assignment_02/catkin_generated/ordered_paths.cmake"
   "assignment_02/catkin_generated/package.cmake"
+  "assignment_03/catkin_generated/ordered_paths.cmake"
+  "assignment_03/catkin_generated/package.cmake"
   "catkin/catkin_generated/version/package.cmake"
   "catkin_generated/installspace/_setup_util.py"
   "catkin_generated/order_packages.cmake"
@@ -22,6 +24,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/home/rmerco/AuE893_rmerco/src/assignment_01/package.xml"
   "/home/rmerco/AuE893_rmerco/src/assignment_02/CMakeLists.txt"
   "/home/rmerco/AuE893_rmerco/src/assignment_02/package.xml"
+  "/home/rmerco/AuE893_rmerco/src/assignment_03/CMakeLists.txt"
+  "/home/rmerco/AuE893_rmerco/src/assignment_03/package.xml"
   "/opt/ros/kinetic/share/catkin/cmake/../package.xml"
   "/opt/ros/kinetic/share/catkin/cmake/all.cmake"
   "/opt/ros/kinetic/share/catkin/cmake/assert.cmake"
@@ -154,6 +158,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "gtest/CMakeFiles/CMakeDirectoryInformation.cmake"
   "assignment_01/CMakeFiles/CMakeDirectoryInformation.cmake"
   "assignment_02/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "assignment_03/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:

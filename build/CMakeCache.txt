@@ -250,6 +250,12 @@ _CATKIN_GTEST_INCLUDE:FILEPATH=/usr/include/gtest/gtest.h
 _CATKIN_GTEST_SRC:FILEPATH=/usr/src/gtest/src/gtest.cc
 
 //Value Computed by CMake
+ass3_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/ass3
+
+//Value Computed by CMake
+ass3_SOURCE_DIR:STATIC=/home/rmerco/AuE893_rmerco/src/ass3
+
+//Value Computed by CMake
 assignment_01_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/assignment_01
 
 //Value Computed by CMake
@@ -260,6 +266,12 @@ assignment_02_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/assignment_02
 
 //Value Computed by CMake
 assignment_02_SOURCE_DIR:STATIC=/home/rmerco/AuE893_rmerco/src/assignment_02
+
+//Value Computed by CMake
+assignment_03_BINARY_DIR:STATIC=/home/rmerco/AuE893_rmerco/build/assignment_03
+
+//Value Computed by CMake
+assignment_03_SOURCE_DIR:STATIC=/home/rmerco/AuE893_rmerco/src/assignment_03
 
 //The directory containing a CMake configuration file for catkin.
 catkin_DIR:PATH=/opt/ros/kinetic/share/catkin/cmake
@@ -427,7 +439,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

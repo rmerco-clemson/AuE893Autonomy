@@ -7,3 +7,4 @@
 subdirs(gtest)
 subdirs(assignment_01)
 subdirs(assignment_02)
+subdirs(assignment_03)

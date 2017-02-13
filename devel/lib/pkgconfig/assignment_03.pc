@@ -1,0 +1,8 @@
+prefix=/home/rmerco/AuE893_rmerco/devel
+
+Name: assignment_03
+Description: Description of assignment_03
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/rmerco/AuE893_rmerco/devel/lib 
+Requires: 

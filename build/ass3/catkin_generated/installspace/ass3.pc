@@ -1,0 +1,8 @@
+prefix=/home/rmerco/AuE893_rmerco/install
+
+Name: ass3
+Description: Description of ass3
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/rmerco/AuE893_rmerco/install/lib 
+Requires: 
