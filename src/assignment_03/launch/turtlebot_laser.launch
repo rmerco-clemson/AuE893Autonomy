@@ -1,9 +1,0 @@
-<launch>
-
-  <node pkg="assignment_03" type="turtlebot_laser.py" name="turtlebot_laser"  output="screen">
-    <param name="scale_linear" value="1.0" type="double"/>
-    <param name="scale_angular" value="0.01" type="double"/>
-    <remap from="turtle1/cmd_vel" to="cmd_vel_mux/input/teleop"/>
-  </node>
-
-</launch>

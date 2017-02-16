@@ -165,12 +165,12 @@ class turtlebot_autonomous:
             errorY = (desired_orientation - self.yaw)
             zcmd = self.constrain(
                 self.KpY * errorY,
-                -math.radians(10),
-                math.radians(10))
+                -math.radians(15),
+                math.radians(15))
 
-        # rospy.loginfo("yaw=%.2f, zcmd=%.2f, qD=%.2f, qY=%.2f",                      
-        #         self.yaw,
-        #         zcmd, qD, qY)
+        rospy.loginfo("yaw=%.2f, zcmd=%.2f, qD=%.2f, qY=%.2f",                      
+                self.yaw,
+                zcmd, qD, qY)
 
         return zcmd
 
@@ -417,12 +417,12 @@ class turtlebot_autonomous:
         current_y = self.turtlebot_odom.pose.pose.position.y
 
         if turn_left:
-            desired_yaw = self.yaw + math.radians(angle)
+            desired_yaw = self.yaw + angle
         else:
-            desired_yaw = self.yaw - math.radians(angle)
+            desired_yaw = self.yaw - angle
 
-        desired_x = current_x + distance * math.cos(desired_yaw)
-        desired_y = current_y + distance * math.sin(desired_yaw)
+        desired_x = current_x - distance * math.cos(math.radians(desired_yaw))
+        desired_y = current_y - distance * math.sin(math.radians(desired_yaw))
 
         self.turn_and_go(desired_x, desired_y)
 
