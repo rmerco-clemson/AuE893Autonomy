@@ -418,7 +418,7 @@ class turtlebot_autonomous:
         vel_msg.angular.z = 0
         self.velocity_publisher.publish(vel_msg)
 
-    def duck(self, turn_left=True, angle=20, distance=1.2):
+    def duck(self, turn_left=True, angle=25, distance=1):
         ''' Make a duck to avoid the obstacle '''
         current_x = self.turtlebot_odom.pose.pose.position.x
         current_y = self.turtlebot_odom.pose.pose.position.y
