@@ -20,14 +20,14 @@ class turtlebot_autonomous:
             'turtle1/cmd_vel', Twist, queue_size=5)
         self.odom_subscriber = rospy.Subscriber(
             "/odom", Odometry, self.odeometry_callback, queue_size=5)
-        # self.laser_subscriber = rospy.Subscriber(
-        #     "/scan", LaserScan, self.laser_callback, queue_size=5)
-        # self.min_distance = 10
-        # self.Flag_duck = False
-        # self.Flag_turn_left = True
-        # self.Flag_arrived_pos = False
-        # self.alarm_level = "Green"
-        # self.obs_place = "N/A"
+        self.laser_subscriber = rospy.Subscriber(
+            "/scan", LaserScan, self.laser_callback, queue_size=5)
+        self.min_distance = 10
+        self.Flag_duck = False
+        self.Flag_turn_left = True
+        self.Flag_arrived_pos = False
+        self.alarm_level = "Green"
+        self.obs_place = "N/A"
         self.turtlebot_odom = Odometry()
         self.turtlebot_laser = LaserScan()
 
@@ -40,14 +40,6 @@ class turtlebot_autonomous:
         self.KpY = 3.0
         self.KiY = 0.003
         self.KdY = 0#2.0
-
-        #position variables
-        # self.current_x = 0
-        # self.current_y = 0
-
-        # # target orientation
-        # self.target_orientation = 0
-
 
     def odeometry_callback(self, odom_msg):
         ''' call back function of position of turtle'''
@@ -63,19 +55,56 @@ class turtlebot_autonomous:
         self.t2 = 2 * math.pow(self.turtlebot_odom.pose.pose.orientation.x,2) - 1 + 2 * pow(self.turtlebot_odom.pose.pose.orientation.w,2)
         self.yaw = (math.pi + math.atan2(self.t1, self.t2))*180/math.pi
 
+    def obstacle_detection(self):
+        ''' Deal with obstacle with laser scan '''
+
+        entries = len(self.turtlebot_laser.ranges)
+        self.min_distance = self.turtlebot_laser.range_max
+        min_point = -1
+        # Get nearest point
+        for entry in range(0, entries):
+            if 0.4 < self.turtlebot_laser.ranges[entry] < 9.5:
+                if self.turtlebot_laser.ranges[entry] < self.min_distance:
+                    self.min_distance = self.turtlebot_laser.ranges[entry]
+                    min_point = entry
+        # Set safe level
+        if self.min_distance < 0.6:
+            self.alarm_level = "Red"
+            self.Flag_duck = True
+        elif self.min_distance < 2.0:
+            self.alarm_level = "Yellow"
+            self.Flag_duck = False
+        else:
+            self.alarm_level = "Green"
+            self.Flag_duck = False
+        # Set obstacle direction
+        if min_point == -1:
+            self.obs_place = "N/A"
+        elif 0 <= min_point < (entries // 2):
+            self.obs_place = "Right"
+            self.Flag_turn_left = True
+        else:
+            self.obs_place = "Left"
+            self.Flag_turn_left = False
+
+        print "Arlarm Level: %s \t Obstacle in the %s \t Distance: %.3f" % (
+            self.alarm_level, self.obs_place, self.min_distance)
+
+    def laser_callback(self, laserscan):
+        '''Callback function for laser scan '''
+        self.turtlebot_laser.ranges = laserscan.ranges
+        self.turtlebot_laser.angle_min = laserscan.angle_min
+        self.turtlebot_laser.angle_max = laserscan.angle_max
+        self.turtlebot_laser.range_min = laserscan.range_min
+        self.turtlebot_laser.range_max = laserscan.range_max
+
+        self.obstacle_detection()    
+
     def constrain(self, val, min_val, max_val):
         ''' Constrain val between min and max'''
         return min(max_val, max(min_val, val))
 
     def orientation_law(self, desired_orientation=0, tol=0.5):
-        # define Kp and Ki
-        # KpY = 3.0
-        # KiY = 0.003
-        # KdY = 0#2.0
-        # Calculate error
-        # t1 = 2 * (turtlebot_odom.pose.pose.orientation.z * turtlebot_odom.pose.pose.orientation.w - turtlebot_odom.pose.pose.orientation.x * turtlebot_odom.pose.pose.orientation.y)
-        # t2 = 2 * math.pow(turtlebot_odom.pose.pose.orientation.x,2) - 1 + 2 * pow(turtlebot_odom.pose.pose.orientation.w,2)
-        # yaw = (math.pi + math.atan2(t1, t2))*180/math.pi
         gain = 1
 
         # detect the actual orientation quadrant
@@ -139,9 +168,9 @@ class turtlebot_autonomous:
                 -math.radians(10),
                 math.radians(10))
 
-        rospy.loginfo("yaw=%.2f, zcmd=%.2f, qD=%.2f, qY=%.2f",                      
-                self.yaw,
-                zcmd, qD, qY)
+        # rospy.loginfo("yaw=%.2f, zcmd=%.2f, qD=%.2f, qY=%.2f",                      
+        #         self.yaw,
+        #         zcmd, qD, qY)
 
         return zcmd
 
@@ -155,11 +184,7 @@ class turtlebot_autonomous:
         rate = rospy.Rate(control_frequency)
 
         while not rospy.is_shutdown():
-            # Calculate yaw
-            # t1 = 2 * (turtlebot_odom.pose.pose.orientation.z * turtlebot_odom.pose.pose.orientation.w - turtlebot_odom.pose.pose.orientation.x * turtlebot_odom.pose.pose.orientation.y)
-            # t2 = 2 * math.pow(turtlebot_odom.pose.pose.orientation.x,2) - 1 + 2 * pow(turtlebot_odom.pose.pose.orientation.w,2)
-            # yaw = (math.pi + math.atan2(t1, t2))*180/math.pi
-
+            
             errorY = (desired_orientation - self.yaw)
             if math.fabs(errorY) < tol:
                 break
@@ -190,8 +215,11 @@ class turtlebot_autonomous:
         ''' Calculate distance between (x1, y1) and (x2, y2)'''
         return math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1 - y2), 2))
 
-    def go_to_pos(self, pos_x=0.0, pos_y=0.0, tol=0.05):
+    def turn_and_go(self, pos_x=0.0, pos_y=0.0, tol=0.05):
         ''' Let the turtle go to certain x,y in turtlesim'''
+
+        # Reset Flag arrived pos
+        self.Flag_arrived_pos = False
 
         # get current position
         current_x = self.turtlebot_odom.pose.pose.position.x
@@ -233,7 +261,7 @@ class turtlebot_autonomous:
         d_errorS = 0.0
         i_errorS = 0.0
 
-        while not rospy.is_shutdown():
+        while self.Flag_duck is False and self.Flag_arrived_pos is False and not rospy.is_shutdown():
             # define Kp and Ki
             KpS = 0.3
             KiS = 0.001
@@ -246,6 +274,7 @@ class turtlebot_autonomous:
             d_errorS = (errorS - last_errorS) * control_frequency
 
             if errorS < tol:
+                self.Flag_arrived_pos = True
                 break
 
             # generate vel cmd
@@ -267,12 +296,12 @@ class turtlebot_autonomous:
                 i_errorS = 0
             last_errorS = errorS
 
-            rospy.loginfo("x=%.2f, y=%.2f, setx=%.2f, sety=%.2f, setyaw=%.2f",
-                      self.turtlebot_odom.pose.pose.position.x,
-                      self.turtlebot_odom.pose.pose.position.y,
-                      pos_x,
-                      pos_y,
-                      target_orientation)
+            # rospy.loginfo("x=%.2f, y=%.2f, setx=%.2f, sety=%.2f, setyaw=%.2f",
+            #           self.turtlebot_odom.pose.pose.position.x,
+            #           self.turtlebot_odom.pose.pose.position.y,
+            #           pos_x,
+            #           pos_y,
+            #           target_orientation)
         
             rate.sleep()
 
@@ -284,120 +313,177 @@ class turtlebot_autonomous:
         vel_msg.angular.z = 0
         self.velocity_publisher.publish(vel_msg)
 
+    def go_to_pos(self, pos_x=0.0, pos_y=0.0, tol=0.05):
+        ''' Let the turtle go to certain x,y in turtlesim'''
+
+        # Reset Flag arrived pos
+        self.Flag_arrived_pos = False
+
+        # get current position
+        current_x = self.turtlebot_odom.pose.pose.position.x
+        current_y = self.turtlebot_odom.pose.pose.position.y
+
+        angle = math.pi + math.atan2((pos_y - current_y), (pos_x - current_x)) 
+        angleD = angle*180/math.pi
+        target_orientation = angleD 
+
+        # rospy.loginfo("target_orientation=%.2f, angle=%.2f",                      
+        #         target_orientation,
+        #         angleD)
+
+        # go to target orientation
+        #self.set_orientation(target_orientation)
+        # stop for 1 second
+        #time.sleep(1)
+
+        # move straight to desired position.
+
+        # Set limit of x and y
+        x_min = -4.5
+        x_max = 4.5
+        y_min = -4.5
+        y_max = 4.5
+        
+        destination = Odometry()
+        destination.pose.pose.position.x = self.constrain(pos_x, x_min, x_max)
+        destination.pose.pose.position.y = self.constrain(pos_y, y_min, y_max)
+        # Define vel_msg
+        vel_msg = Twist()
+        # loop rate
+        control_frequency = 30
+        rate = rospy.Rate(control_frequency)
+
+        # init parameters for distance controller
+        errorS = 0.0
+        last_errorS = 0.0
+        d_errorS = 0.0
+        i_errorS = 0.0
+
+        while self.Flag_duck is False and self.Flag_arrived_pos is False and not rospy.is_shutdown():
+            # define Kp and Ki
+            KpS = 0.3
+            KiS = 0.001
+            KdS = 1.0
+            # Calculate error
+            errorS = self.get_distance(
+                self.turtlebot_odom.pose.pose.position.x,
+                self.turtlebot_odom.pose.pose.position.y,
+                pos_x, pos_y)
+            d_errorS = (errorS - last_errorS) * control_frequency
+
+            if errorS < tol:
+                self.Flag_arrived_pos = True
+                break
+
+            # generate vel cmd
+            vel_msg.linear.x = self.constrain(
+                KpS * errorS + KiS * i_errorS + KdS * d_errorS, -0.4, 0.4)
+            vel_msg.linear.y = 0
+            vel_msg.linear.z = 0
+            vel_msg.angular.x = 0
+            vel_msg.angular.y = 0
+            
+            zcmd = self.orientation_law(target_orientation, tol)
+            vel_msg.angular.z = zcmd
+
+            self.velocity_publisher.publish(vel_msg)
+
+            if i_errorS < 1:
+                i_errorS += errorS / control_frequency
+            else:
+                i_errorS = 0
+            last_errorS = errorS
+
+            # rospy.loginfo("x=%.2f, y=%.2f, setx=%.2f, sety=%.2f, setyaw=%.2f",
+            #           self.turtlebot_odom.pose.pose.position.x,
+            #           self.turtlebot_odom.pose.pose.position.y,
+            #           pos_x,
+            #           pos_y,
+            #           target_orientation)
+        
+            rate.sleep()
+
+        vel_msg.linear.x = 0
+        vel_msg.linear.y = 0
+        vel_msg.linear.z = 0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+        vel_msg.angular.z = 0
+        self.velocity_publisher.publish(vel_msg)
+
+    def duck(self, turn_left=True, angle=20, distance=1.2):
+        ''' Make a duck to avoid the obstacle '''
+        current_x = self.turtlebot_odom.pose.pose.position.x
+        current_y = self.turtlebot_odom.pose.pose.position.y
+
+        if turn_left:
+            desired_yaw = self.yaw + math.radians(angle)
+        else:
+            desired_yaw = self.yaw - math.radians(angle)
+
+        desired_x = current_x + distance * math.cos(desired_yaw)
+        desired_y = current_y + distance * math.sin(desired_yaw)
+
+        self.turn_and_go(desired_x, desired_y)
+
+    def move_to_goal(self, pos_x=0.0, pos_y=0.0, tol_distance=0.05):
+        ''' Move to a position with obstacle avoidance'''
+        self.Flag_arrived_pos = False
+
+        while not rospy.is_shutdown():
+            if self.Flag_duck:
+                self.duck(self.Flag_turn_left)
+            else:
+                self.turn_and_go(pos_x, pos_y, tol_distance)
+                if self.Flag_arrived_pos:
+                    break
     
 def main():
 
-    #####################################################
-    # Test code
-    #####################################################
+    
+
+    # Start
+    rospy.loginfo('Task start.')
+    rospy.loginfo('Init...')
+
     turtlebot = turtlebot_autonomous()
     rospy.init_node('turtlebot_autonomous', anonymous=True)
 
-    # Start test
-    rospy.loginfo('Task start.')
-    rospy.loginfo('Init...')
-    # Wait 3 second to make sure gazebo ready
-    time.sleep(1)
-   
-    #----------------------------------------------------
-    # Test go_to_pos
-    # x limit (-4.5, 4.5), y limit (-4.5, 4.5)
+    print "Move to (5.0, -4.0)"
+    turtlebot.move_to_goal(5.0, -4.0)
+    print "Arrived."
 
-    rospy.loginfo("Go to position (3,-3)")
-    turtlebot.go_to_pos(3, -3)   # go_to_pos(1, 1)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    print "Move to (-2.4, -1.0)"
+    turtlebot.move_to_goal(-2.4, -1.0)
+    print "Arrived."
 
-    rospy.loginfo("Go to position (5,-3)")
-    turtlebot.go_to_pos(5, -3)   # go_to_pos(1, 1)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    print "Done."
+    
 
-    rospy.loginfo("Go to position (5,-1)")
-    turtlebot.go_to_pos(5, -1)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (3,-3)")
+    # turtlebot.move_to_goal(3, -3)   # go_to_pos(1, 1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    rospy.loginfo("Go to position (0,-1)")
-    turtlebot.go_to_pos(0, -1)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (5,-3)")
+    # turtlebot.move_to_goal(5, -3)   # go_to_pos(1, 1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    rospy.loginfo("Go to position (0,0)")
-    turtlebot.go_to_pos(0, 0)
-    rospy.loginfo("Arrived.")
-    time.sleep(2)
+    # rospy.loginfo("Go to position (5,-1)")
+    # turtlebot.move_to_goal(5, -1)
+    # rospy.loginfo("Arrived.")
+    # time.sleep(2)
 
-    # rospy.loginfo("Go to position (-2,-3)")
-    # go_to_pos(2, 3)
+    # rospy.loginfo("Go to position (0,-1)")
+    # turtlebot.move_to_goal(0, -1)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
 
     # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(2, -3)
+    # turtlebot.move_to_goal(0, 0)
     # rospy.loginfo("Arrived.")
     # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(1, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(1, 3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(0, 3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(0, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-1, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-1, 3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-2, 3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-2, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-3, -3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(-3, 3)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-    # rospy.loginfo("Go to position (0,0)")
-    # go_to_pos(0, 0)
-    # rospy.loginfo("Arrived.")
-    # time.sleep(2)
-
-
-    # # grid_clean_10_by_10()
-    # # spiral_clean_10_by_10()
-
-    # rospy.loginfo("Task complished.")
 
 
 if __name__ == '__main__':
