@@ -39,7 +39,12 @@ class turtlebot_autonomous:
         # init controller on Yaw
         self.KpY = 3.0
         self.KiY = 0.003
-        self.KdY = 0#2.0
+        self.KdY = 2.0
+        self.last_errorY = 0
+        self.d_errorY = 0
+
+        # control frequency
+        self.control_frequency = 30
 
     def odeometry_callback(self, odom_msg):
         ''' call back function of position of turtle'''
@@ -163,8 +168,10 @@ class turtlebot_autonomous:
         else:
             # define the speed of rotation using controller
             errorY = (desired_orientation - self.yaw)
+            self.d_errorY = (errorY - self.last_errorY) * self.control_frequency
+            self.last_errorY = errorY
             zcmd = self.constrain(
-                self.KpY * errorY,
+                self.KpY * errorY + self.KdY * self.d_errorY,
                 -math.radians(15),
                 math.radians(15))
 
@@ -180,8 +187,8 @@ class turtlebot_autonomous:
         # Define vel_msg
         vel_msg = Twist()
         # loop rate
-        control_frequency = 30
-        rate = rospy.Rate(control_frequency)
+        # self.control_frequency = 30
+        rate = rospy.Rate(self.control_frequency)
 
         while not rospy.is_shutdown():
             
@@ -252,8 +259,8 @@ class turtlebot_autonomous:
         # Define vel_msg
         vel_msg = Twist()
         # loop rate
-        control_frequency = 30
-        rate = rospy.Rate(control_frequency)
+        # self.control_frequency = 30
+        rate = rospy.Rate(self.control_frequency)
 
         # init parameters for distance controller
         errorS = 0.0
@@ -271,7 +278,7 @@ class turtlebot_autonomous:
                 self.turtlebot_odom.pose.pose.position.x,
                 self.turtlebot_odom.pose.pose.position.y,
                 pos_x, pos_y)
-            d_errorS = (errorS - last_errorS) * control_frequency
+            d_errorS = (errorS - last_errorS) * self.control_frequency
 
             if errorS < tol:
                 self.Flag_arrived_pos = True
@@ -291,7 +298,7 @@ class turtlebot_autonomous:
             self.velocity_publisher.publish(vel_msg)
 
             if i_errorS < 1:
-                i_errorS += errorS / control_frequency
+                i_errorS += errorS / self.control_frequency
             else:
                 i_errorS = 0
             last_errorS = errorS
