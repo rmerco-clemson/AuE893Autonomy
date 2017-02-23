@@ -1,2 +1,2 @@
-assignment_01:assignment_02:assignment_03
+assignment_01:assignment_02:assignment_03:assignment_04:mybot_control:mybot_description:mybot_gazebo:mybot_navigation
 -DCATKIN_DEVEL_PREFIX=/home/rmerco/AuE893_rmerco/devel -DCMAKE_INSTALL_PREFIX=/home/rmerco/AuE893_rmerco/install -G Unix Makefiles
