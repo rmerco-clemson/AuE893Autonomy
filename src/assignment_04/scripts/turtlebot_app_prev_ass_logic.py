@@ -31,14 +31,6 @@ class turtlebot_autonomous:
         self.turtlebot_odom = Odometry()
         self.turtlebot_laser = LaserScan()
 
-        # from wanderer
-        self.sect_1 = 0
-        self.sect_2 = 0
-        self.sect_3 = 0
-        self.ang = {0:0,001:-1.2,10:-1.2,11:-1.2,100:1.5,101:1.0,110:1.0,111:1.2}
-        self.fwd = {0:.25,1:0,10:0,11:0,100:0.1,101:0,110:0,111:0}
-        self.dbgmsg = {0:'Move forward',1:'Veer right',10:'Veer right',11:'Veer right',100:'Veer left',101:'Veer left',110:'Veer left',111:'Veer right'}
-
         #init orientation
         self.yaw = 0
         self.t1 = 0
@@ -53,57 +45,6 @@ class turtlebot_autonomous:
 
         # control frequency
         self.control_frequency = 30
-        
-    # from wanderer
-    def reset_sect(self):
-        '''Resets the below variables before each new scan message is read'''
-        self.sect_1 = 0
-        self.sect_2 = 0
-        self.sect_3 = 0
-
-    # from wanderer
-    def sort(self, laserscan):
-        '''Goes through 'ranges' array in laserscan message and determines 
-        where obstacles are located. The class variables sect_1, sect_2, 
-        and sect_3 are updated as either '0' (no obstacles within 0.7 m)
-        or '1' (obstacles within 0.7 m)
-
-        Parameter laserscan is a laserscan message.'''
-        entries = len(laserscan.ranges)
-        for entry in range(0,entries):
-            if 0.4 < laserscan.ranges[entry] < 0.75:
-                self.sect_1 = 1 if (0 < entry < entries/3) else 0 
-                self.sect_2 = 1 if (entries/3 < entry < entries/2) else 0
-                self.sect_3 = 1 if (entries/2 < entry < entries) else 0
-        rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3))
-
-    def movement(self, sect1, sect2, sect3):
-        '''Uses the information known about the obstacles to move robot.
-
-        Parameters are class variables and are used to assign a value to
-        variable sect and then	set the appropriate angular and linear 
-        velocities, and log messages.
-        These are published and the sect variables are reset.'''
-        sect = int(str(self.sect_1) + str(self.sect_2) + str(self.sect_3))
-        rospy.loginfo("Sect = " + str(sect)) 
-        
-        # self.msg.angular.z = self.ang[sect]
-        # self.msg.linear.x = self.fwd[sect]
-        # rospy.loginfo(self.dbgmsg[sect])
-        # self.pub.publish(self.msg)
-
-        # Define vel_msg
-        vel_msg = Twist()
-
-        vel_msg.linear.x = self.fwd[sect]
-        vel_msg.linear.y = 0
-        vel_msg.linear.z = 0
-        vel_msg.angular.x = 0
-        vel_msg.angular.y = 0
-        vel_msg.angular.z = self.ang[sect]
-        self.velocity_publisher.publish(vel_msg)
-
-        self.reset_sect()
 
     def odeometry_callback(self, odom_msg):
         ''' call back function of position of turtle'''
@@ -157,15 +98,13 @@ class turtlebot_autonomous:
 
     def laser_callback(self, laserscan):
         '''Callback function for laser scan '''
-        # self.turtlebot_laser.ranges = laserscan.ranges
-        # self.turtlebot_laser.angle_min = laserscan.angle_min
-        # self.turtlebot_laser.angle_max = laserscan.angle_max
-        # self.turtlebot_laser.range_min = laserscan.range_min
-        # self.turtlebot_laser.range_max = laserscan.range_max
+        self.turtlebot_laser.ranges = laserscan.ranges
+        self.turtlebot_laser.angle_min = laserscan.angle_min
+        self.turtlebot_laser.angle_max = laserscan.angle_max
+        self.turtlebot_laser.range_min = laserscan.range_min
+        self.turtlebot_laser.range_max = laserscan.range_max
 
-        # self.obstacle_detection() 
-        self.sort(laserscan)
-        self.movement(self.sect_1, self.sect_2, self.sect_3)
+        self.obstacle_detection()    
 
     def constrain(self, val, min_val, max_val):
         ''' Constrain val between min and max'''
@@ -516,18 +455,17 @@ def main():
     rospy.loginfo('Init...')
 
     turtlebot = turtlebot_autonomous()
-    rospy.init_node('racing_autonomous', anonymous=True)
-    rospy.spin()
+    rospy.init_node('turtlebot_autonomous', anonymous=True)
 
-    # print "Move to (5.0, -4.0)"
-    # turtlebot.move_to_goal(5.0, -4.0)
-    # print "Arrived."
+    print "Move to (5.0, -4.0)"
+    turtlebot.move_to_goal(5.0, -4.0)
+    print "Arrived."
 
-    # print "Move to (-2.4, -1.0)"
-    # turtlebot.move_to_goal(-2.4, -1.0)
-    # print "Arrived."
+    print "Move to (-2.4, -1.0)"
+    turtlebot.move_to_goal(-2.4, -1.0)
+    print "Arrived."
 
-    # print "Done."
+    print "Done."
     
 
     # rospy.loginfo("Go to position (3,-3)")
