@@ -29,11 +29,14 @@ class turtlebot_autonomous:
         self.sect_1 = 0
         self.sect_2 = 0
         self.sect_3 = 0
+        self.sect_left = 0    
+        self.sect_center = 0  
+        self.sect_right = 0  
         self.ang = {0:0,001:-1.2,10:-1.2,11:-1.2,100:1.5,101:1.0,110:1.0,111:1.2}
         self.fwd = {0:.25,1:0,10:0,11:0,100:0.1,101:0,110:0,111:0}
         self.dbgmsg = {0:'Move forward',1:'Veer right',10:'Veer right',11:'Veer right',100:'Veer left',101:'Veer left',110:'Veer left',111:'Veer right'}
 
-        # init parameters for speed controller        
+        # init parameters for steering controller        
         self.last_errorS = 0.0
         self.d_errorS = 0.0        
         self.KpS = 0.3        
@@ -48,6 +51,7 @@ class turtlebot_autonomous:
         self.sect_1 = 0
         self.sect_2 = 0
         self.sect_3 = 0
+        self.sect_center = 0
 
     # from wanderer
     def sort(self, laserscan):
@@ -58,12 +62,32 @@ class turtlebot_autonomous:
 
         Parameter laserscan is a laserscan message.'''
         entries = len(laserscan.ranges)
+        self.sect_left = laserscan.range_max            
+        self.sect_center = laserscan.range_max         
+        self.sect_right = laserscan.range_max         
+        
         for entry in range(0,entries):
             if 0.4 < laserscan.ranges[entry] < 0.75:
                 self.sect_1 = 1 if (0 < entry < entries/3) else 0 
                 self.sect_2 = 1 if (entries/3 < entry < entries/2) else 0
                 self.sect_3 = 1 if (entries/2 < entry < entries) else 0
-        rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3))
+
+            # left minimum distance sensed
+            if (0 < entry < entries*2/5):
+                if (laserscan.ranges[entry] < self.sect_left):
+                    self.sect_left = laserscan.ranges[entry]
+
+            # center minimum distance sensed
+            if (entries*2/5 < entry < entries*3/5):
+                if (laserscan.ranges[entry] < self.sect_center):
+                    self.sect_center = laserscan.ranges[entry]
+
+            # right minimum distance sensed
+            if (entries*3/5 < entry < entries):
+                if (laserscan.ranges[entry] < self.sect_right):
+                    self.sect_right = laserscan.ranges[entry]
+
+        rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3) + " sect_center: " + str(self.sect_center))
 
     def movement(self, sect1, sect2, sect3):
         '''Uses the information known about the obstacles to move robot.'''
@@ -71,19 +95,19 @@ class turtlebot_autonomous:
         rospy.loginfo("Sect = " + str(sect))     
 
         # Calculate error
-        errorS = 1
+        errorS = self.sect_right - self.sect_left
         self.d_errorS = (errorS - self.last_errorS) * self.control_frequency
         self.last_errorS = errorS
 
         # Define vel_msg
         vel_msg = Twist()
 
-        vel_msg.linear.x = self.fwd[sect]
+        vel_msg.linear.x = self.sect_center * 0.3  #self.fwd[sect]
         vel_msg.linear.y = 0
         vel_msg.linear.z = 0
         vel_msg.angular.x = 0
         vel_msg.angular.y = 0
-        vel_msg.angular.z = self.ang[sect]
+        vel_msg.angular.z = self.ang[sect] #self.constrain(self.KpS * errorS + self.KdS * self.d_errorS, -0.2, 0.2) #
         self.velocity_publisher.publish(vel_msg)
 
         self.reset_sect()
