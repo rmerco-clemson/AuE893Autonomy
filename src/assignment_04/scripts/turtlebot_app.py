@@ -39,11 +39,13 @@ class turtlebot_autonomous:
         # init parameters for steering controller        
         self.last_errorS = 0.0
         self.d_errorS = 0.0        
-        self.KpS = 0.3        
+        self.i_errorS = 0.0
+        self.KpS = 0.9        
         self.KdS = 1.0
+        self.KiS = 0.1
 
         # control frequency
-        self.control_frequency = 30
+        self.control_frequency = 50
         
     # from wanderer
     def reset_sect(self):
@@ -67,7 +69,8 @@ class turtlebot_autonomous:
         self.sect_right = laserscan.range_max         
         
         for entry in range(0,entries):
-            if 0.4 < laserscan.ranges[entry] < 0.75:
+            # if 0.4 < laserscan.ranges[entry] < 0.75:
+            if 0.2 < laserscan.ranges[entry] < 0.65:
                 self.sect_1 = 1 if (0 < entry < entries/3) else 0 
                 self.sect_2 = 1 if (entries/3 < entry < entries/2) else 0
                 self.sect_3 = 1 if (entries/2 < entry < entries) else 0
@@ -95,19 +98,32 @@ class turtlebot_autonomous:
         rospy.loginfo("Sect = " + str(sect))     
 
         # Calculate error
-        errorS = self.sect_right - self.sect_left
-        self.d_errorS = (errorS - self.last_errorS) * self.control_frequency
+        errorST = self.sect_right - self.sect_left
+        if (math.fabs(errorST) > 0 ):
+            errorS = errorST
+        else:
+            errorS = 0            
+        self.d_errorS = (errorS - self.last_errorS) / self.control_frequency
         self.last_errorS = errorS
+        self.i_errorS += errorS * self.control_frequency
+
+        rospy.loginfo("Error = " + str(errorS))
 
         # Define vel_msg
         vel_msg = Twist()
 
-        vel_msg.linear.x = self.sect_center * 0.3  #self.fwd[sect]
+        # self.KiS * self.i_errorS +
+        if (sect == 0):
+            vel_msg.angular.z = self.constrain(self.KpS * errorS + self.KdS * self.d_errorS, -0.5, 0.5)
+            vel_msg.linear.x = self.constrain(self.sect_center * 0.3, 0.0, 0.5)
+        else:
+            vel_msg.angular.z = self.ang[sect]
+            vel_msg.linear.x = self.fwd[sect]      
+        
         vel_msg.linear.y = 0
         vel_msg.linear.z = 0
         vel_msg.angular.x = 0
         vel_msg.angular.y = 0
-        vel_msg.angular.z = self.ang[sect] #self.constrain(self.KpS * errorS + self.KdS * self.d_errorS, -0.2, 0.2) #
         self.velocity_publisher.publish(vel_msg)
 
         self.reset_sect()
@@ -118,7 +134,7 @@ class turtlebot_autonomous:
         rospy.loginfo("runrun started") 
 
         while not rospy.is_shutdown():
-            rospy.loginfo("while movement")     
+            # rospy.loginfo("while movement")     
             self.movement(self.sect_1, self.sect_2, self.sect_3)
             rate.sleep()
 
@@ -152,7 +168,7 @@ class turtlebot_autonomous:
         '''Callback function for laser scan '''
 
         self.sort(laserscan)
-        # self.movement(self.sect_1, self.sect_2, self.sect_3)
+        self.movement(self.sect_1, self.sect_2, self.sect_3)
 
     def constrain(self, val, min_val, max_val):
         ''' Constrain val between min and max'''
@@ -265,7 +281,8 @@ def main():
     turtlebot = turtlebot_autonomous()
     rospy.init_node('racing_autonomous', anonymous=True)
 
-    turtlebot.run_run()
+    rospy.spin()
+    # turtlebot.run_run()
 
 if __name__ == '__main__':
     try:
