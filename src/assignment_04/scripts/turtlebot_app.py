@@ -70,7 +70,7 @@ class turtlebot_autonomous:
         
         for entry in range(0,entries):
             # if 0.4 < laserscan.ranges[entry] < 0.75:
-            if 0.2 < laserscan.ranges[entry] < 0.65:
+            if 0 < laserscan.ranges[entry] < 0.55:
                 self.sect_1 = 1 if (0 < entry < entries/3) else 0 
                 self.sect_2 = 1 if (entries/3 < entry < entries/2) else 0
                 self.sect_3 = 1 if (entries/2 < entry < entries) else 0
@@ -98,8 +98,9 @@ class turtlebot_autonomous:
         rospy.loginfo("Sect = " + str(sect))     
 
         # Calculate error
+
         errorST = self.sect_right - self.sect_left
-        if (math.fabs(errorST) > 0 ):
+        if (math.fabs(errorST) > 0.1 ):
             errorS = errorST
         else:
             errorS = 0            
