@@ -46,6 +46,9 @@ class turtlebot_autonomous:
 
         # control frequency
         self.control_frequency = 50
+
+	#var min sector
+	self.min_sector = 0
         
     # from wanderer
     def reset_sect(self):
@@ -77,8 +80,8 @@ class turtlebot_autonomous:
 
             # left minimum distance sensed
             if (0 < entry < entries*2/5):
-                if (laserscan.ranges[entry] < self.sect_left):
-                    self.sect_left = laserscan.ranges[entry]
+                if (laserscan.ranges[entry] < self.sect_right):
+                    self.sect_right = laserscan.ranges[entry]
 
             # center minimum distance sensed
             if (entries*2/5 < entry < entries*3/5):
@@ -87,10 +90,17 @@ class turtlebot_autonomous:
 
             # right minimum distance sensed
             if (entries*3/5 < entry < entries):
-                if (laserscan.ranges[entry] < self.sect_right):
-                    self.sect_right = laserscan.ranges[entry]
+                if (laserscan.ranges[entry] < self.sect_left):
+                    self.sect_left = laserscan.ranges[entry]
 
-        rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3) + " sect_center: " + str(self.sect_center))
+        if (self.sect_right < self.sect_center and self.sect_right < self.sect_left):
+            self.min_sector = 1
+        elif (self.sect_center < self.sect_right and self.sect_center < self.sect_left):
+            self.min_sector = 2
+        else:
+            self.min_sector = 3
+
+        rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3) + " min_sector: " + str(self.min_sector))
 
     def movement(self, sect1, sect2, sect3):
         '''Uses the information known about the obstacles to move robot.'''
@@ -99,7 +109,7 @@ class turtlebot_autonomous:
 
         # Calculate error
 
-        errorST = self.sect_right - self.sect_left
+        errorST = -self.sect_right + self.sect_left
         if (math.fabs(errorST) > 0.1 ):
             errorS = errorST
         else:
