@@ -74,8 +74,8 @@ class turtlebot_autonomous:
             # identify the minimum distance for each sector
             # added to wanderer: left minimum distance sensed            
             if (0 < entry < entries*2/5):
-                if (laserscan.ranges[entry] < self.sect_left):
-                    self.sect_left = laserscan.ranges[entry]
+                if (laserscan.ranges[entry] < self.sect_right):
+                    self.sect_right = laserscan.ranges[entry]
 
             # center minimum distance sensed
             if (entries*2/5 < entry < entries*3/5):
@@ -84,8 +84,8 @@ class turtlebot_autonomous:
 
             # right minimum distance sensed
             if (entries*3/5 < entry < entries):
-                if (laserscan.ranges[entry] < self.sect_right):
-                    self.sect_right = laserscan.ranges[entry]
+                if (laserscan.ranges[entry] < self.sect_left):
+                    self.sect_left = laserscan.ranges[entry]
 
         #rospy.loginfo("sort complete,sect_1: " + str(self.sect_1) + " sect_2: " + str(self.sect_2) + " sect_3: " + str(self.sect_3) + " sect_center: " + str(self.sect_center))
 
@@ -94,7 +94,7 @@ class turtlebot_autonomous:
         sect = int(str(self.sect_1) + str(self.sect_2) + str(self.sect_3))
 
         # Calculate error for PD
-        errorST = self.sect_right - self.sect_left
+        errorST = self.sect_left - self.sect_right
 
         # dead band
         if (math.fabs(errorST) > 0.1 ): 
